@@ -10,14 +10,6 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type Host struct {
-	Hostname string
-	Port int
-	Username string
-	Password string
-	Rsa string
-}
-
 type Config struct {
     // Rand provides the source of entropy for cryptographic
     // primitives. If Rand is nil, the cryptographic random reader
@@ -48,10 +40,7 @@ type Config struct {
 }
 
 
-
-// Connect used to create ssh connect session
-// simple usage: s,err := h.Connect([]string{})
-func (h *Host)Connect(cipherList []string) (*ssh.Session, error) {
+func Connect(user, password, host string, port int, key string, cipherList []string) (*ssh.Session, error) {
 	var (
 		// ssh.AuthMethod 存放 SSH 认证方式，密码认证用 ssh.Password() 来加载密码
 		// 使用密钥认证就用 ssh.ParsePrivateKey() 或 ssh.ParsePrivateKeyWithPassphrase() 读取密钥
@@ -66,19 +55,19 @@ func (h *Host)Connect(cipherList []string) (*ssh.Session, error) {
 	)
 	// get auth method
 	auth = make([]ssh.AuthMethod, 0)
-	if h.Rsa == "" {
-		auth = append(auth, ssh.Password(h.Password))
+	if key == "" {
+		auth = append(auth, ssh.Password(password))
 	} else {
-		pemBytes, err := ioutil.ReadFile(h.Rsa)
+		pemBytes, err := ioutil.ReadFile(key)
 		if err != nil {
 			return nil, err
 		}
 
 		var signer ssh.Signer
-		if h.Password == "" {
+		if password == "" {
 			signer, err = ssh.ParsePrivateKey(pemBytes)
 		} else {
-			signer, err = ssh.ParsePrivateKeyWithPassphrase(pemBytes, []byte(h.Password))
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(pemBytes, []byte(password))
 		}
 		if err != nil {
 			return nil, err
@@ -97,7 +86,7 @@ func (h *Host)Connect(cipherList []string) (*ssh.Session, error) {
 	}
 
 	clientConfig = &ssh.ClientConfig{
-		User:    h.Username,
+		User:    user,
 		Auth:    auth,
 		Timeout: 30 * time.Second,
 		Config:  config,
@@ -109,7 +98,7 @@ func (h *Host)Connect(cipherList []string) (*ssh.Session, error) {
 	}
 
 	// connet to ssh
-	addr = fmt.Sprintf("%s:%d", h.Hostname, h.Port)
+	addr = fmt.Sprintf("%s:%d", host, port)
 
 	if client, err = ssh.Dial("tcp", addr, clientConfig); err != nil {
 		return nil, err

@@ -6,21 +6,17 @@ import (
 	"testing"
 )
 
-var (
-	h = Host{
-		Hostname: "192.168.117.1",
-		Port:     22,
-		Username: "demo",
-		Password: "demo",
-		Rsa:      "",
-	}
+const (
+	username = "demo"
+	password = "demo"
+	ip = "192.168.117.1"
+	port = 22
 	cmd = "show clock"
 	cmds = "show clock;show env power;exit"
 )
 
 func TestSSHRun(t *testing.T) {
-	ciphers := []string{}
-	session, err := h.Connect(ciphers)
+	session, err := Connect(username, password, ip, port, "", []string{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -35,8 +31,7 @@ func TestSSHRun(t *testing.T) {
 }
 
 func TestSSHShell(t *testing.T) {
-	ciphers := []string{}
-	session, err := h.Connect(ciphers)
+	session, err := Connect(username, password, ip, port,"",  []string{})
 	if err != nil {
 		t.Error(err)
 		return

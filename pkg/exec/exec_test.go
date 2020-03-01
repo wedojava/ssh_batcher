@@ -1,12 +1,11 @@
 package exec
 
 import (
-	"bytes"
 	"github.com/wedojava/ssh_batcher/pkg/conn"
 	"testing"
 )
 
-var h = conn.Host{
+var h = Host{
 	Hostname: "192.168.117.1",
 	Port:     22,
 	Username: "demo",
@@ -17,10 +16,29 @@ var h = conn.Host{
 
 
 func TestExec(t *testing.T) {
-	s,_ := h.Connect([]string{})
-	var stdoutBuf bytes.Buffer
-	s.Stdout = &stdoutBuf
-	Exec(*s, "show whoami")
-	t.Log(s.Stdout)
+	s,err := conn.Connect(h.Username, h.Password,h.Hostname,h.Port,h.Rsa,[]string{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer s.Close()
+	err = CMD(*s, "show whoami")
+	if err != nil {
+		t.Error(err)
+	}
+	return
+}
+
+func TestExecCMDs(t *testing.T) {
+	s,err := conn.Connect(h.Username, h.Password,h.Hostname,h.Port,h.Rsa,[]string{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer s.Close()
+	err = CMDList(*s, []string{"show whoami", "show run"})
+	if err != nil {
+		t.Error(err)
+	}
 	return
 }
